@@ -4,7 +4,25 @@ var gulp = require('gulp'),
     neuter = require('gulp-neuter'),
     concat = require('gulp-concat'),
     emberTemplates = require('gulp-ember-templates'),
-    zip = require('gulp-zip');
+    zip = require('gulp-zip'),
+    mergeStream = require('merge-stream'),
+    runSequence = require('run-sequence');
+
+gulp.task('build', function() {
+    /* ----------------------------------------
+    Salesforce Lightning Design System
+    ---------------------------------------- */
+    var slds = gulp.src('node_modules/@salesforce-ux/design-system/assets/**/*')
+        .pipe(gulp.dest('./public/assets'));
+    
+    /* ----------------------------------------
+    Moment.js
+    ---------------------------------------- */
+    var moment = gulp.src('node_modules/moment/moment.js')
+        .pipe(gulp.dest('./public/lib/moment'));
+    
+    return mergeStream(slds, moment);
+});
 
 gulp.task('emberTemplates', function() {
 	gulp.src('./aljs-ember-app/templates/**/*.hbs')
@@ -13,7 +31,15 @@ gulp.task('emberTemplates', function() {
     .pipe(gulp.dest('./aljs-ember-app/'));
 });
 
-gulp.task('concatAll', function() {
+gulp.task('neuter', function() {
+    gulp.src('aljs-ember-app/aljs-compiler.js')
+        .pipe(neuter('aljs.pck.js', null, {
+            basePath: 'aljs-ember-app/'
+        }))
+        .pipe(gulp.dest('./public/js'));
+});
+
+gulp.task('concat', function() {
     var buildOrder = [
         './public/src/jquery.aljs-init.js',
         './public/src/jquery.aljs-datepicker.js',
@@ -26,27 +52,22 @@ gulp.task('concatAll', function() {
         './public/src/jquery.aljs-pill.js',
         './public/src/jquery.aljs-popover.js',
         './public/src/jquery.aljs-tabs.js'
-    ]
+    ];
     
     return gulp.src(buildOrder)
         .pipe(concat('jquery.aljs-all.js'))
 		.pipe(gulp.dest('./public/src'));
 });
 
-gulp.task('neuter', function() {
-	gulp.src('./aljs-ember-app/aljs-compiler.js')
-		.pipe(neuter('aljs.pck.js'))
-        .pipe(rename({ suffix: '.min' }))
-        .pipe(uglify())
-		.pipe(gulp.dest('./public/js'));
-});
-
-gulp.task('neuterDev', function() {
-    gulp.src('aljs-ember-app/aljs-compiler.js')
-        .pipe(neuter('aljs.pck.js', null, {
-            basePath: 'aljs-ember-app/'
-        }))
-        .pipe(gulp.dest('./public/js'));
+gulp.task('concatWithMoment', function() {
+    var buildOrder = [
+        './public/lib/moment/moment.js',
+        './public/src/jquery.aljs-all.js'
+    ];
+    
+    return gulp.src(buildOrder)
+        .pipe(concat('jquery.aljs-all-with-moment.js'))
+		.pipe(gulp.dest('./public/src'));
 });
 
 gulp.task('uglify', function() {
@@ -62,21 +83,16 @@ gulp.task('zip', function() {
         .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('dist', function() {
+    return runSequence('concat', 'concatWithMoment', 'uglify', 'zip');
+});
+
 gulp.task('watch', function() {
-    gulp.watch(['./public/src/**/*.js', '!./public/src/**/*.min.js', '!./public/src/jquery.aljs-all.js'], ['concatAll']);
-    gulp.watch(['./public/src/**/*.js', '!./public/src/**/*.min.js'], ['uglify']);
     gulp.watch('./aljs-ember-app/templates/**/*.hbs', ['emberTemplates']);
     gulp.watch('./aljs-ember-app/**/*.js', ['neuter']);
-    gulp.watch('./dist/**/*', ['zip']);
+    gulp.watch(['./public/src/**/*.js', '!./public/src/**/*.min.js', '!./public/src/jquery.aljs-all.js', '!./public/src/jquery.aljs-all-with-moment.js'], ['dist']);
 });
 
-gulp.task('watchDev', function() {
-    gulp.watch(['./public/src/**/*.js', '!./public/src/**/*.min.js', '!./public/src/jquery.aljs-all.js'], ['concatAll']);
-    gulp.watch(['./public/src/**/*.js', '!./public/src/**/*.min.js'], ['uglify']);
-    gulp.watch('./aljs-ember-app/templates/**/*.hbs', ['emberTemplates']);
-    gulp.watch('./aljs-ember-app/**/*.js', ['neuterDev']);
-    gulp.watch('./dist/**/*', ['zip']);
+gulp.task('default', ['build'], function() {
+    return runSequence('emberTemplates', 'neuter', 'dist', 'watch');
 });
-
-gulp.task('default', ['emberTemplates', 'concatAll', 'neuter', 'uglify', 'zip', 'watch']);
-gulp.task('dev', ['emberTemplates', 'concatAll', 'neuterDev', 'uglify', 'zip', 'watchDev']);

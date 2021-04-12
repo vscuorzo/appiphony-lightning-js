@@ -2,7 +2,7 @@
 {{#aljs-main-content}}
     <p class="site-text-introduction slds-m-bottom--xx-large">Enabling Appiphony Lightning JS on your Visualforce pages is simple.</p>
     <div class="slds-m-bottom--xx-large slds-text-longform">
-        <h4 class="site-text-heading--medium">Import the SLDS Library as a Static Resource</h4>
+        {{!--<h4 class="site-text-heading--medium">Import the SLDS Library as a Static Resource</h4>
         <ol>
             <li><a href="http://www.lightningdesignsystem.com/resources/downloads" target="_blank">Download</a> the SLDS Library from their website.</li>
             <li>Create a zip that contains the assets folder in its root.</li>
@@ -34,17 +34,28 @@
     <link rel="stylesheet" href="{!URLFOR($Resource.slds, '/assets/styles/salesforce-lightning-design-system.min.css')}"/>
 </apex:page>
 {{/aljs-pre-container}}
-    <p class="slds-m-top--large site-text-heading--small">Define the assets location for SLDS (this gives ALJS access to SLDS' fonts and icons)</p>
+    <p class="slds-m-top--large site-text-heading--small">Define the location of the SLDS assets directory (optional; see <a class="scroll" href="#override">Override Default Settings</a>)</p>
 {{#aljs-pre-container type="vf"}}
 <script>
-    var assetsLocation = '{!URLFOR($Resource.slds}';
+    var assetsLocation = '{!URLFOR($Resource.slds)}';
 </script>
 {{/aljs-pre-container}}
-    <p class="slds-m-top--large site-text-heading--small">Scope your page's content inside of the <code>slds</code> class (optional)</p>
+    <p class="slds-m-top--large site-text-heading--small">Scope your page's content inside of the <code>slds</code> class (optional; see <a class="scroll" href="#override">Override Default Settings</a>)</p>
 {{#aljs-pre-container type="vf"}}
-<div class="slds">Your content here</div>
+<div class="slds-scope">Your content here</div>
 {{/aljs-pre-container}}
+        --}}
         
+    <h4 class="site-text-heading--medium">Include the Lightning Design System (SLDS)</h4>
+    <p>You can apply the latest version of SLDS to your page by including the <code>&lt;apex:slds /&gt;</code> element at the head.</p>
+    {{#aljs-pre-container type="vf"}}
+<apex:page sidebar="false" standardStylesheets="false" showHeader="false" docType="html-5.0">
+    &lt;head&gt;
+        <title>My Visualforce Page</title>
+        &lt;apex:slds /&gt;
+    &lt;/head&gt;
+</apex:page>
+{{/aljs-pre-container}}
     </div>
     {{aljs-code-container routeName="gettingStarted" selectedSection=selectedSection}}
 
